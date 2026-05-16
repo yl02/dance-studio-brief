@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>舞蹈工作室 · 需求调研</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Sans+SC:wght@300;400;500&display=swap');
+
+:root {
+  --ink: #1a1714;
+  --ink-mid: #4a4540;
+  --ink-light: #8a857e;
+  --cream: #f7f4ef;
+  --cream-d: #ede9e2;
+  --accent: #c8a96e;
+  --accent-l: rgba(200,169,110,0.15);
+  --line: #dedad4;
+  --white: #faf9f6;
+  --green: #4a7c59;
+  --green-l: rgba(74,124,89,0.12);
+  --radius: 12px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body { height:100%; background:var(--cream-d); font-family:'Noto Sans SC',sans-serif; color:var(--ink); }
+
+/* ── SHELL ── */
+#app { display:flex; flex-direction:column; height:100%; max-width:480px; margin:0 auto; background:var(--white); position:relative; overflow:hidden; }
+
+/* ── TOP BAR ── */
+.topbar {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px 12px;
+  background:var(--white);
+  border-bottom:1px solid var(--line);
+  position:relative; z-index:10;
+}
+.topbar-left { display:flex; flex-direction:column; gap:2px; }
+.topbar-brand { font-family:'Cormorant Garamond',serif; font-size:11px; font-weight:300; letter-spacing:0.2em; color:var(--accent); }
+.topbar-title { font-size:13px; font-weight:500; color:var(--ink); letter-spacing:0.05em; }
+.save-badge {
+  font-size:10px; color:var(--ink-light); letter-spacing:0.06em;
+  display:flex; align-items:center; gap:5px;
+  transition:color 0.3s;
+}
+.save-badge.saved { color:var(--green); }
+.save-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--line); flex-shrink:0;
+  transition:background 0.3s;
+}
+.save-badge.saved .save-dot { background:var(--green); }
+.save-badge.saving .save-dot { background:var(--accent); animation:pulse 0.8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── PROGRESS BAR ── */
+.progress-wrap {
+  flex-shrink:0;
+  padding:12px 20px;
+  background:var(--white);
+  border-bottom:1px solid var(--line);
+}
+.progress-label {
+  display:flex; justify-content:space-between;
+  font-size:10px; color:var(--ink-light); letter-spacing:0.06em;
+  margin-bottom:8px;
+}
+.progress-sections {
+  display:flex; gap:4px;
+}
+.prog-seg {
+  flex:1; height:3px; border-radius:2px;
+  background:var(--line);
+  transition:background 0.4s ease;
+}
+.prog-seg.done { background:var(--green); }
+.prog-seg.active { background:var(--accent); }
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
+}
+
+/* ── SCREENS ── */
+.screen { display:none; }
+.screen.active { display:block; }
+
+/* ── COVER SCREEN ── */
+.cover {
+  min-height:100%;
+  background:var(--ink);
+  display:flex; flex-direction:column;
+  padding:48px 28px 40px;
+  position:relative; overflow:hidden;
+}
+.cover::before {
+  content:''; position:absolute;
+  top:-80px; right:-60px;
+  width:300px; height:300px;
+  border-radius:50%;
+  border:1px solid rgba(200,169,110,0.12);
+}
+.cover::after {
+  content:''; position:absolute;
+  top:-20px; right:0;
+  width:180px; height:180px;
+  border-radius:50%;
+  border:1px solid rgba(200,169,110,0.08);
+}
+.cover-tag {
+  font-family:'Cormorant Garamond',serif;
+  font-size:11px; font-weight:300;
+  letter-spacing:0.25em; color:var(--accent);
+  text-transform:uppercase; margin-bottom:40px;
+}
+.cover-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:52px; font-weight:300;
+  color:var(--cream); line-height:1.05;
+  margin-bottom:6px;
+}
+.cover-sub {
+  font-size:14px; font-weight:300;
+  color:rgba(247,244,239,0.45);
+  letter-spacing:0.12em; margin-bottom:28px;
+}
+.cover-line {
+  width:36px; height:1px;
+  background:var(--accent); margin-bottom:24px;
+}
+.cover-desc {
+  font-size:12px; color:rgba(247,244,239,0.4);
+  line-height:2.2; letter-spacing:0.04em;
+  flex:1; margin-bottom:40px;
+}
+.cover-meta {
+  display:flex; gap:16px; margin-bottom:32px;
+  flex-wrap:wrap;
+}
+.cover-chip {
+  background:rgba(200,169,110,0.12);
+  border:1px solid rgba(200,169,110,0.25);
+  border-radius:20px;
+  padding:6px 14px;
+  font-size:11px; color:var(--accent);
+  letter-spacing:0.06em;
+}
+.cover-input-group {
+  display:flex; flex-direction:column; gap:16px;
+  margin-bottom:32px;
+}
+.cover-field label {
+  display:block;
+  font-size:10px; color:rgba(200,169,110,0.7);
+  letter-spacing:0.15em; margin-bottom:6px;
+}
+.cover-field input {
+  width:100%; background:transparent;
+  border:none; border-bottom:1px solid rgba(247,244,239,0.15);
+  color:var(--cream); font-size:14px;
+  font-family:'Noto Sans SC',sans-serif;
+  padding:8px 0; outline:none;
+  transition:border-color 0.2s;
+}
+.cover-field input:focus { border-bottom-color:var(--accent); }
+.cover-field input::placeholder { color:rgba(247,244,239,0.2); font-size:13px; }
+
+.btn-start {
+  width:100%; padding:18px;
+  background:var(--accent);
+  border:none; border-radius:var(--radius);
+  font-size:14px; font-weight:500;
+  font-family:'Noto Sans SC',sans-serif;
+  color:var(--ink); letter-spacing:0.1em;
+  cursor:pointer;
+  transition:opacity 0.2s, transform 0.1s;
+  position:relative; overflow:hidden;
+}
+.btn-start:active { transform:scale(0.98); opacity:0.9; }
+
+/* ── SECTION SCREEN ── */
+.sec-screen { padding-bottom:120px; }
+
+.sec-hero {
+  background:var(--ink);
+  padding:28px 20px 24px;
+  position:relative;
+}
+.sec-hero-num {
+  font-family:'Cormorant Garamond',serif;
+  font-size:64px; font-weight:300;
+  color:rgba(200,169,110,0.2);
+  line-height:1; position:absolute;
+  top:12px; right:20px;
+}
+.sec-hero-en {
+  font-family:'Cormorant Garamond',serif;
+  font-size:11px; font-weight:300;
+  letter-spacing:0.25em; color:var(--accent);
+  text-transform:uppercase; margin-bottom:6px;
+}
+.sec-hero-zh {
+  font-family:'Cormorant Garamond',serif;
+  font-size:28px; font-weight:300;
+  color:var(--cream); line-height:1.2;
+}
+.sec-hero-note {
+  font-size:11px; color:rgba(247,244,239,0.4);
+  margin-top:8px; letter-spacing:0.04em; line-height:1.7;
+}
+
+.q-list { padding:0 20px; }
+
+/* ── QUESTION CARD ── */
+.q-card {
+  padding:24px 0;
+  border-bottom:1px solid var(--line);
+}
+.q-card:last-child { border-bottom:none; }
+
+.q-header {
+  display:flex; gap:12px; align-items:flex-start;
+  margin-bottom:14px;
+}
+.q-num {
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px; font-weight:300;
+  color:var(--accent); line-height:1.1;
+  flex-shrink:0; width:22px; text-align:right;
+}
+.q-text {
+  font-size:14px; font-weight:400;
+  color:var(--ink); line-height:1.8;
+  letter-spacing:0.03em;
+}
+.q-hint {
+  font-size:11.5px; color:var(--ink-light);
+  line-height:1.8; letter-spacing:0.03em;
+  margin-left:34px; margin-bottom:14px;
+  padding-left:10px;
+  border-left:2px solid rgba(200,169,110,0.3);
+}
+
+/* TEXT INPUT */
+.ans-text {
+  width:100%; padding:14px 16px;
+  background:var(--cream-d);
+  border:1.5px solid transparent;
+  border-radius:10px;
+  font-size:14px; color:var(--ink);
+  font-family:'Noto Sans SC',sans-serif;
+  line-height:1.8; outline:none; resize:none;
+  transition:border-color 0.2s, background 0.2s;
+  min-height:52px;
+}
+.ans-text:focus {
+  border-color:var(--accent);
+  background:var(--white);
+}
+.ans-text.multiline { min-height:100px; }
+textarea.ans-text { display:block; }
+
+/* CHECKBOX OPTIONS */
+.opts-wrap { display:flex; flex-direction:column; gap:8px; }
+.opts-wrap.grid2 {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+}
+
+.opt-btn {
+  display:flex; align-items:center; gap:10px;
+  padding:13px 14px;
+  background:var(--cream-d);
+  border:1.5px solid transparent;
+  border-radius:10px;
+  cursor:pointer; transition:all 0.15s;
+  text-align:left;
+}
+.opt-btn.selected {
+  background:var(--accent-l);
+  border-color:var(--accent);
+}
+.opt-check {
+  width:18px; height:18px; flex-shrink:0;
+  border:1.5px solid var(--ink-light);
+  border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.15s;
+}
+.opt-btn.selected .opt-check {
+  background:var(--accent);
+  border-color:var(--accent);
+}
+.opt-check::after {
+  content:''; width:5px; height:9px;
+  border-right:2px solid var(--white);
+  border-bottom:2px solid var(--white);
+  transform:rotate(45deg) translate(-1px,-1px);
+  opacity:0; transition:opacity 0.15s;
+}
+.opt-btn.selected .opt-check::after { opacity:1; }
+.opt-text-label {
+  font-size:13px; color:var(--ink-mid);
+  letter-spacing:0.03em; line-height:1.5;
+}
+
+/* SCALE */
+.scale-wrap { display:flex; flex-direction:column; gap:14px; }
+.scale-item {}
+.scale-ends {
+  display:flex; justify-content:space-between;
+  margin-bottom:8px;
+}
+.scale-end {
+  font-size:11px; color:var(--ink-light);
+  letter-spacing:0.04em;
+}
+.scale-btns {
+  display:flex; gap:6px;
+}
+.scale-btn {
+  flex:1; height:40px;
+  background:var(--cream-d);
+  border:1.5px solid transparent;
+  border-radius:8px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:16px; color:var(--ink-light);
+  cursor:pointer; transition:all 0.15s;
+  display:flex; align-items:center; justify-content:center;
+}
+.scale-btn.selected {
+  background:var(--accent-l);
+  border-color:var(--accent);
+  color:var(--accent);
+  font-weight:500;
+}
+
+/* PRIORITY TABLE */
+.prio-table { width:100%; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+.prio-head {
+  display:grid;
+  background:var(--ink);
+  padding:10px 14px;
+  gap:8px;
+}
+.prio-head-text {
+  font-size:10px; color:rgba(247,244,239,0.6);
+  letter-spacing:0.08em;
+}
+.prio-row {
+  border-bottom:1px solid var(--line);
+  padding:14px;
+  background:var(--white);
+  transition:background 0.2s;
+}
+.prio-row:last-child { border-bottom:none; }
+.prio-row:nth-child(even) { background:rgba(237,233,226,0.35); }
+.prio-item-name {
+  font-size:12.5px; color:var(--ink-mid);
+  margin-bottom:10px; line-height:1.5;
+}
+.prio-btns {
+  display:flex; gap:6px;
+}
+.prio-btn {
+  flex:1; padding:7px 4px;
+  border-radius:6px;
+  border:1px solid var(--line);
+  background:var(--cream-d);
+  font-size:11px; color:var(--ink-light);
+  cursor:pointer; text-align:center;
+  transition:all 0.15s; letter-spacing:0.04em;
+}
+.prio-btn.sel-must { background:#fdecea; border-color:#e57373; color:#c0392b; }
+.prio-btn.sel-pref { background:rgba(74,124,89,0.1); border-color:var(--green); color:var(--green); }
+.prio-btn.sel-flex { background:rgba(200,169,110,0.12); border-color:var(--accent); color:#9a7a40; }
+
+/* 3-WAY TOGGLE */
+.tri-table { display:flex; flex-direction:column; gap:2px; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+.tri-row {
+  background:var(--white);
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  display:flex; flex-direction:column; gap:8px;
+}
+.tri-row:last-child { border-bottom:none; }
+.tri-row:nth-child(even) { background:rgba(237,233,226,0.35); }
+.tri-name { font-size:12.5px; color:var(--ink-mid); line-height:1.5; }
+.tri-btns { display:flex; gap:6px; }
+.tri-btn {
+  flex:1; padding:7px 2px;
+  border-radius:6px;
+  border:1px solid var(--line);
+  background:var(--cream-d);
+  font-size:11px; color:var(--ink-light);
+  cursor:pointer; text-align:center;
+  transition:all 0.15s;
+}
+.tri-btn.sel-must { background:#fdecea; border-color:#e57373; color:#c0392b; }
+.tri-btn.sel-pref { background:rgba(74,124,89,0.1); border-color:var(--green); color:var(--green); }
+.tri-btn.sel-flex { background:rgba(200,169,110,0.12); border-color:var(--accent); color:#9a7a40; }
+
+/* RANK TABLE */
+.rank-table { display:flex; flex-direction:column; gap:2px; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+.rank-row {
+  background:var(--white);
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:12px;
+}
+.rank-row:last-child { border-bottom:none; }
+.rank-row:nth-child(even) { background:rgba(237,233,226,0.35); }
+.rank-name { font-size:12.5px; color:var(--ink-mid); flex:1; line-height:1.5; }
+.rank-select {
+  -webkit-appearance:none; appearance:none;
+  background:var(--cream-d);
+  border:1.5px solid var(--line);
+  border-radius:8px;
+  padding:7px 28px 7px 12px;
+  font-size:13px; color:var(--ink-mid);
+  font-family:'Noto Sans SC',sans-serif;
+  outline:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238a857e' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 10px center;
+  min-width:64px;
+}
+.rank-select:focus { border-color:var(--accent); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position:fixed; bottom:0; left:50%;
+  transform:translateX(-50%);
+  width:100%; max-width:480px;
+  background:var(--white);
+  border-top:1px solid var(--line);
+  padding:16px 20px calc(16px + var(--safe-bottom));
+  display:flex; gap:12px; z-index:20;
+}
+.btn-prev {
+  flex:0 0 auto;
+  padding:15px 20px;
+  background:transparent;
+  border:1.5px solid var(--line);
+  border-radius:var(--radius);
+  font-size:13px; color:var(--ink-mid);
+  font-family:'Noto Sans SC',sans-serif;
+  cursor:pointer; transition:all 0.15s;
+}
+.btn-prev:active { background:var(--cream-d); }
+.btn-next {
+  flex:1;
+  padding:15px;
+  background:var(--ink);
+  border:none; border-radius:var(--radius);
+  font-size:14px; font-weight:500; letter-spacing:0.08em;
+  font-family:'Noto Sans SC',sans-serif;
+  color:var(--cream); cursor:pointer;
+  transition:all 0.15s; position:relative; overflow:hidden;
+}
+.btn-next:active { opacity:0.85; transform:scale(0.99); }
+.btn-next.final { background:var(--accent); color:var(--ink); }
+
+/* ── DONE SCREEN ── */
+.done-screen {
+  min-height:100%;
+  background:var(--ink);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:60px 32px;
+  text-align:center;
+}
+.done-icon {
+  width:72px; height:72px;
+  border-radius:50%;
+  background:rgba(74,124,89,0.2);
+  border:1px solid var(--green);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 32px;
+  font-size:28px;
+}
+.done-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px; font-weight:300;
+  color:var(--cream); margin-bottom:12px; line-height:1.2;
+}
+.done-sub {
+  font-size:13px; color:rgba(247,244,239,0.45);
+  line-height:2; letter-spacing:0.05em; margin-bottom:48px;
+}
+.done-summary {
+  width:100%; background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:var(--radius);
+  padding:20px; text-align:left;
+  margin-bottom:32px;
+}
+.done-summary-title {
+  font-size:10px; color:var(--accent);
+  letter-spacing:0.15em; margin-bottom:16px;
+}
+.done-info-row {
+  display:flex; justify-content:space-between;
+  padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:12px;
+}
+.done-info-row:last-child { border-bottom:none; }
+.done-info-label { color:rgba(247,244,239,0.4); }
+.done-info-val { color:var(--cream); font-weight:500; }
+.btn-done-restart {
+  width:100%; padding:16px;
+  background:transparent;
+  border:1px solid rgba(247,244,239,0.15);
+  border-radius:var(--radius);
+  font-size:13px; color:rgba(247,244,239,0.45);
+  font-family:'Noto Sans SC',sans-serif;
+  letter-spacing:0.08em; cursor:pointer;
+}
+
+/* TOAST */
+#toast {
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+  background:var(--ink); color:var(--cream);
+  padding:10px 20px; border-radius:20px;
+  font-size:12px; letter-spacing:0.06em;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.3s; z-index:999;
+  white-space:nowrap;
+}
+#toast.show { opacity:1; }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.screen.active { animation:fadeUp 0.3s ease forwards; }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar" id="topbar" style="display:none">
+    <div class="topbar-left">
+      <div class="topbar-brand">Bubble Studio</div>
+      <div class="topbar-title" id="topbar-title">需求调研问卷</div>
+    </div>
+    <div class="save-badge" id="save-badge">
+      <div class="save-dot"></div>
+      <span id="save-text">已保存</span>
+    </div>
+  </div>
+
+  <div class="progress-wrap" id="progress-wrap" style="display:none">
+    <div class="progress-label">
+      <span id="prog-label">第 1 部分，共 6 部分</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-sections" id="prog-segs"></div>
+  </div>
+
+  <div class="scroll-area" id="scroll-area">
+    <!-- COVER -->
+    <div class="screen active" id="screen-cover">
+      <div class="cover">
+        <div class="cover-tag">Bubble Studio · 设计前期调研</div>
+        <div class="cover-title">舞蹈工作室<br>需求问卷</div>
+        <div class="cover-sub">Dance Studio Brief</div>
+        <div class="cover-line"></div>
+        <div class="cover-desc">
+          本问卷共 6 个模块，帮助设计师全面了解您的业务与需求。
+          填写进度会自动保存在本设备，可随时中断、续填。
+          <br><br>预计填写时长 20 — 30 分钟
+        </div>
+        <div class="cover-meta">
+          <div class="cover-chip">6 个模块</div>
+          <div class="cover-chip">33 道题</div>
+          <div class="cover-chip">自动保存</div>
+        </div>
+        <div class="cover-input-group">
+          <div class="cover-field">
+            <label>您的姓名 / 机构名称</label>
+            <input type="text" id="cover-name" placeholder="请输入" autocomplete="name">
+          </div>
+          <div class="cover-field">
+            <label>联系方式（微信 / 手机号）</label>
+            <input type="text" id="cover-contact" placeholder="请输入">
+          </div>
+        </div>
+        <button class="btn-start" onclick="startSurvey()">开始填写问卷</button>
+      </div>
+    </div>
+
+    <!-- SECTIONS will be injected here -->
+    <div id="sections-wrap"></div>
+
+    <!-- DONE -->
+    <div class="screen" id="screen-done">
+      <div class="done-screen">
+        <div class="done-icon">✓</div>
+        <div class="done-title">提交成功<br>感谢您的填写</div>
+        <div class="done-sub">Bubble Studio 将在 1—2 个工作日内与您联系，<br>共同梳理空间需求与设计方向。</div>
+        <div class="done-summary">
+          <div class="done-summary-title">提交摘要</div>
+          <div class="done-info-row">
+            <span class="done-info-label">姓名</span>
+            <span class="done-info-val" id="done-name">—</span>
+          </div>
+          <div class="done-info-row">
+            <span class="done-info-label">提交时间</span>
+            <span class="done-info-val" id="done-time">—</span>
+          </div>
+          <div class="done-info-row">
+            <span class="done-info-label">完成题数</span>
+            <span class="done-info-val" id="done-count">—</span>
+          </div>
+        </div>
+        <button onclick="copyAnswers()" style="width:100%;padding:15px;margin-bottom:12px;background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.35);border-radius:var(--radius);font-size:13px;color:var(--accent);font-family:'Noto Sans SC',sans-serif;letter-spacing:0.08em;cursor:pointer;">复制答案文本</button><button class="btn-done-restart" onclick="restartSurvey()">重新填写</button>
+      </div>
+    </div>
+  </div><!-- /scroll-area -->
+
+  <div class="bottom-nav" id="bottom-nav" style="display:none">
+    <button class="btn-prev" id="btn-prev" onclick="prevSection()">← 上一部分</button>
+    <button class="btn-next" id="btn-next" onclick="nextSection()">下一部分 →</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════
+//  DATA SCHEMA
+// ════════════════════════════════
+const SECTIONS = [
+  {
+    id:'s1', num:'01', en:'Business Overview', zh:'业务概况',
+    note:'了解您的机构定位与学员构成，是空间规划的起点',
+    questions:[
+      { id:'q1', type:'textarea', text:'请简要描述您的工作室定位——它是一家什么样的机构？',
+        hint:'例如：专注艺考舞蹈的备考型工作室、综合艺培机构的舞蹈部门……' },
+      { id:'q2', type:'multi', text:'主要服务的考学类型（可多选）',
+        opts:['中考体育舞蹈加分','高中艺考（舞蹈专业）','高校舞蹈联考/校考','体育院校舞蹈方向','艺术类中专升学','其他'] },
+      { id:'q3', type:'multi', text:'计划开设的舞蹈种类（可多选）',
+        opts:['中国古典舞','中国民族民间舞','芭蕾基训','现代舞/当代舞','拉丁/标准舞','流行舞/编导','形体礼仪','乐理/视唱练耳','其他'],
+        grid2:true },
+      { id:'q4', type:'multi', text:'目标学员年龄段（可多选）',
+        opts:['小学生 6—12岁','初中生 12—15岁','高中生 15—18岁','大学生及成人'], grid2:true },
+      { id:'q5', type:'single', text:'预计同期在读学员人数',
+        opts:['50人以下','50—150人','150—300人','300人以上'], grid2:true },
+      { id:'q6', type:'textarea', text:'是否已有在运营的校区？现有场地存在哪些痛点？',
+        hint:'若暂无，可描述您对新场地最迫切的期待' },
+    ]
+  },
+  {
+    id:'s2', num:'02', en:'Space Usage', zh:'空间使用方式',
+    note:'排课逻辑与日常动线，直接决定功能分区与面积配比',
+    questions:[
+      { id:'q7', type:'textarea', text:'需要几间独立教室？各教室预计同时上课人数？',
+        hint:'例如：2间大课室（20人）+ 1间小课室（8人）' },
+      { id:'q8', type:'single', text:'单间教室理想净面积',
+        opts:['60㎡以下','60—100㎡','100—150㎡','150㎡以上'], grid2:true },
+      { id:'q8b', type:'input', text:'镜墙长度有特定要求吗？', placeholder:'例如：全幅镜墙，至少8米宽' },
+      { id:'q9', type:'multi', text:'日常营业时段（可多选）',
+        opts:['工作日下午+晚间','周末全天','寒暑假集训模式','全天候常规排课'], grid2:true },
+      { id:'q10', type:'prio', text:'辅助功能空间需求（标注 必须 / 优先 / 可协商）',
+        items:['等候区/家长休息区','前台/接待区','更衣室+淋浴间','教师办公/休息室','谈单室','服装道具储藏间','学员自习备考区','汇报演出/表演区','拍摄录制专区','简餐饮品供应区'] },
+      { id:'q11', type:'textarea', text:'学员上课前后的典型动线？家长是否长时间在场等候？',
+        hint:'例如：进门签到→更衣→候课→上课→更衣→离开' },
+      { id:'q12', type:'single', text:'集训住宿或餐饮配套需求',
+        opts:['无需，学员自行解决','提供午/晚餐','有住宿配套计划','视场地情况再定'], grid2:true },
+    ]
+  },
+  {
+    id:'s3', num:'03', en:'Site Requirements', zh:'选址条件',
+    note:'硬件参数直接关系到设计的可行性边界',
+    questions:[
+      { id:'q13', type:'input', text:'目标选址城市/区域？有无特定商圈或学区偏好？', placeholder:'例如：成都高新区，靠近中学集中地带' },
+      { id:'q14', type:'single', text:'物业类型偏好',
+        opts:['购物中心内','独栋/底商沿街铺','教育园区/文创园','住宅底层商铺','办公楼层改造','无特定要求'], grid2:true },
+      { id:'q15', type:'multi', text:'楼层偏好（可多选）',
+        opts:['首层（最佳）','2—3层可接受','4层及以上','负一层（地下）','有电梯即可'], grid2:true },
+      { id:'q16', type:'single', text:'理想总使用面积',
+        opts:['300㎡以下','300—600㎡','600—1000㎡','1000㎡以上'], grid2:true },
+      { id:'q17', type:'single', text:'层高要求（舞蹈室建议净高≥3.8m）',
+        opts:['3.8m以上（标准）','4.5m以上（挑高）','视场地协商'] },
+      { id:'q18', type:'tri', text:'以下硬件条件，请标注重要程度',
+        hint:'必须 = 无此条件不考虑；优先 = 重要但可协商；可接受 = 有最好',
+        items:['独立卫生间（室内）','充足自然采光','专属停车位','独立出入口/门头展示','中央空调/可装新风系统','楼板隔音条件良好','消防验收已通过','承重满足弹簧地板要求'] },
+      { id:'q19', type:'textarea', text:'是否已有候选场地？可以描述地址或情况吗？',
+        hint:'若已有平面图，沟通时可发给设计师参考' },
+    ]
+  },
+  {
+    id:'s4', num:'04', en:'Brand & Atmosphere', zh:'品牌气质与空间氛围',
+    note:'空间是品牌最直接的物理呈现，这部分帮助校准审美方向',
+    questions:[
+      { id:'q20', type:'three-words', text:'用 3 个词形容希望学员走进工作室的第一感受' },
+      { id:'q21', type:'scale', text:'风格倾向（在1—5之间选择）',
+        scales:[
+          { left:'简约克制', right:'丰富精致' },
+          { left:'冷峻专业', right:'温暖亲近' },
+          { left:'传统古典', right:'现代时尚' },
+          { left:'沉稳内敛', right:'活力张扬' },
+        ]},
+      { id:'q22', type:'multi', text:'色彩方向偏好（可多选）',
+        opts:['黑白灰·无彩色系','米白·奶油·暖中性','深色系·高级感','品牌主色延伸','撞色·活泼跳跃','听设计师建议'], grid2:true },
+      { id:'q23', type:'textarea', text:'有欣赏的参考案例吗？（名称/描述均可）',
+        hint:'国内外舞蹈教室、健身空间、艺术机构均可，也可以描述感受' },
+      { id:'q24', type:'single', text:'品牌视觉现状',
+        opts:['已有完整VI，需延续','有Logo，VI未完整','品牌名已定，无视觉','一切尚在规划中'], grid2:true },
+      { id:'q24b', type:'input', text:'品牌名称（如已定）', placeholder:'请输入工作室名称' },
+      { id:'q25', type:'textarea', text:'对空间的「记忆锚点」有初步设想吗？',
+        hint:'例如：特色前台背景墙、落地镜廊、荣誉展示区、特定材质地面……' },
+    ]
+  },
+  {
+    id:'s5', num:'05', en:'Budget & Timeline', zh:'预算与时间节点',
+    note:'合理的预期管理是项目顺利推进的基础',
+    questions:[
+      { id:'q26', type:'single', text:'装修预算区间（含软装，不含设备）',
+        opts:['20万以下','20—50万','50—100万','100万以上','待方案后评估'], },
+      { id:'q27', type:'single', text:'专项设备预算（地板/音响/镜墙/把杆等）',
+        opts:['有独立设备预算','合并在装修预算内','由设计师统筹建议','尚未考虑'], grid2:true },
+      { id:'q28', type:'input', text:'期望开业时间或招生节点要求', placeholder:'例如：赶在暑假前完工，约2025年7月' },
+      { id:'q29', type:'single', text:'若预算与期望有缺口，倾向于',
+        opts:['缩减面积，保证品质','保留面积，降低标准','分期施工，先开核心区','适当增加预算，不妥协'], grid2:true },
+      { id:'q30', type:'rank', text:'在以下投入方向中，请按重视程度排序（1=最重要）',
+        items:['教室地面（弹簧/专业地胶）','镜墙质量与尺寸','隔音处理','空调/通风系统','公共区域品牌形象','智能化/门禁监控'] },
+    ]
+  },
+  {
+    id:'s6', num:'06', en:'Collaboration', zh:'合作偏好与补充',
+    note:'了解您的决策方式，帮助建立更顺畅的工作节奏',
+    questions:[
+      { id:'q31', type:'single', text:'本项目的决策方式',
+        opts:['我个人全权决定','与合伙人共同确认','需报投资方审批','家庭共同决策'], grid2:true },
+      { id:'q32', type:'single', text:'对设计方案的参与程度偏好',
+        opts:['充分信任设计师，给予自由度','有明确想法，希望深度参与','关注结果，保持适度参与','需在多轮方案中比较后决定'], },
+      { id:'q33', type:'textarea', text:'在您心中，一个理想的舞蹈考学工作室最核心的竞争力是什么？',
+        hint:'这道题没有标准答案，请自由描述您对这个空间最深的期待。' },
+      { id:'q34', type:'textarea', text:'还有什么想补充告诉设计师的？',
+        hint:'任何问卷未涵盖但您认为重要的信息，都欢迎写在这里。' },
+    ]
+  },
+];
+
+// ════════════════════════════════
+//  STATE
+// ════════════════════════════════
+let state = {
+  currentSection: 0,
+  answers: {},
+  clientName: '',
+  clientContact: '',
+  startedAt: null,
+};
+
+const STORAGE_KEY = 'bubble_dance_survey_v1';
+
+// ════════════════════════════════
+//  STORAGE (window.storage API + localStorage fallback)
+// ════════════════════════════════
+async function saveState() {
+  setSaveBadge('saving');
+  const payload = JSON.stringify(state);
+  try {
+    if (window.storage) {
+      await window.storage.set(STORAGE_KEY, payload);
+    } else {
+      localStorage.setItem(STORAGE_KEY, payload);
+    }
+    setSaveBadge('saved');
+  } catch(e) {
+    try { localStorage.setItem(STORAGE_KEY, payload); setSaveBadge('saved'); }
+    catch(e2) { setSaveBadge('error'); }
+  }
+}
+
+async function loadState() {
+  try {
+    let raw = null;
+    if (window.storage) {
+      const r = await window.storage.get(STORAGE_KEY);
+      raw = r ? r.value : null;
+    }
+    if (!raw) raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+async function clearState() {
+  try {
+    if (window.storage) await window.storage.delete(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+  } catch(e) {}
+}
+
+function setSaveBadge(status) {
+  const badge = document.getElementById('save-badge');
+  const text = document.getElementById('save-text');
+  badge.className = 'save-badge ' + status;
+  if (status === 'saving') text.textContent = '保存中…';
+  else if (status === 'saved') text.textContent = '已保存';
+  else text.textContent = '保存失败';
+}
+
+// ════════════════════════════════
+//  BUILD UI
+// ════════════════════════════════
+function buildSections() {
+  const wrap = document.getElementById('sections-wrap');
+  wrap.innerHTML = '';
+
+  // Progress segments
+  const segWrap = document.getElementById('prog-segs');
+  segWrap.innerHTML = SECTIONS.map((_,i) =>
+    `<div class="prog-seg" id="seg-${i}"></div>`).join('');
+
+  SECTIONS.forEach((sec, si) => {
+    const div = document.createElement('div');
+    div.className = 'screen sec-screen';
+    div.id = `screen-s${si}`;
+
+    let html = `
+      <div class="sec-hero">
+        <div class="sec-hero-num">${sec.num}</div>
+        <div class="sec-hero-en">${sec.en}</div>
+        <div class="sec-hero-zh">${sec.zh}</div>
+        <div class="sec-hero-note">${sec.note}</div>
+      </div>
+      <div class="q-list">
+    `;
+
+    sec.questions.forEach((q, qi) => {
+      html += `<div class="q-card" id="qcard-${q.id}">`;
+      html += `<div class="q-header"><div class="q-num">${qi+1}</div><div class="q-text">${q.text}</div></div>`;
+      if (q.hint) html += `<div class="q-hint">${q.hint}</div>`;
+      html += buildInput(q, si);
+      html += `</div>`;
+    });
+
+    html += `</div>`;
+    div.innerHTML = html;
+    wrap.appendChild(div);
+  });
+}
+
+function buildInput(q, si) {
+  const val = state.answers[q.id] || {};
+
+  if (q.type === 'textarea') {
+    const v = val.text || '';
+    return `<textarea class="ans-text multiline" id="inp-${q.id}" placeholder="请填写…" oninput="ans('${q.id}','text',this.value)">${v}</textarea>`;
+  }
+  if (q.type === 'input') {
+    const v = val.text || '';
+    return `<input class="ans-text" type="text" id="inp-${q.id}" placeholder="${q.placeholder||'请填写'}" value="${v}" oninput="ans('${q.id}','text',this.value)">`;
+  }
+  if (q.type === 'single') {
+    const sel = val.selected || [];
+    const g = q.grid2 ? ' grid2' : '';
+    return `<div class="opts-wrap${g}">${q.opts.map(o =>
+      `<div class="opt-btn${sel.includes(o)?' selected':''}" onclick="toggleSingle('${q.id}','${o}',this)">
+        <div class="opt-check"></div>
+        <div class="opt-text-label">${o}</div>
+      </div>`).join('')}</div>`;
+  }
+  if (q.type === 'multi') {
+    const sel = val.selected || [];
+    const g = q.grid2 ? ' grid2' : '';
+    return `<div class="opts-wrap${g}">${q.opts.map(o =>
+      `<div class="opt-btn${sel.includes(o)?' selected':''}" onclick="toggleMulti('${q.id}','${o}',this)">
+        <div class="opt-check"></div>
+        <div class="opt-text-label">${o}</div>
+      </div>`).join('')}</div>`;
+  }
+  if (q.type === 'three-words') {
+    const ws = val.words || ['','',''];
+    return `<div style="margin-left:0;display:flex;gap:10px;">
+      ${[0,1,2].map(i =>
+        `<div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-size:10px;color:var(--ink-light);text-align:center;letter-spacing:0.08em">词 ${i+1}</div>
+          <input class="ans-text" type="text" style="text-align:center" value="${ws[i]}"
+            oninput="ansWord('${q.id}',${i},this.value)" placeholder="…">
+        </div>`).join('')}
+    </div>`;
+  }
+  if (q.type === 'scale') {
+    const sv = val.scales || {};
+    return `<div class="scale-wrap">${q.scales.map((s,i) => {
+      const cur = sv[i] || 0;
+      return `<div class="scale-item">
+        <div class="scale-ends"><span class="scale-end">${s.left}</span><span class="scale-end">${s.right}</span></div>
+        <div class="scale-btns">${[1,2,3,4,5].map(n =>
+          `<div class="scale-btn${cur===n?' selected':''}" onclick="ansScale('${q.id}',${i},${n},this.parentElement)">${n}</div>`
+        ).join('')}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  if (q.type === 'prio') {
+    const pv = val.prio || {};
+    return `<div class="prio-table">
+      <div class="prio-head" style="grid-template-columns:1fr"><div class="prio-head-text">点选每项的重要程度</div></div>
+      ${q.items.map(item => {
+        const cur = pv[item] || '';
+        return `<div class="prio-row">
+          <div class="prio-item-name">${item}</div>
+          <div class="prio-btns">
+            <div class="prio-btn${cur==='必须'?' sel-must':''}" onclick="ansPrio('${q.id}','${item}','必须',this.parentElement)">必须</div>
+            <div class="prio-btn${cur==='优先'?' sel-pref':''}" onclick="ansPrio('${q.id}','${item}','优先',this.parentElement)">优先</div>
+            <div class="prio-btn${cur==='可协商'?' sel-flex':''}" onclick="ansPrio('${q.id}','${item}','可协商',this.parentElement)">可协商</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  if (q.type === 'tri') {
+    const tv = val.tri || {};
+    return `<div class="tri-table">
+      ${q.items.map(item => {
+        const cur = tv[item] || '';
+        return `<div class="tri-row">
+          <div class="tri-name">${item}</div>
+          <div class="tri-btns">
+            <div class="tri-btn${cur==='必须'?' sel-must':''}" onclick="ansTri('${q.id}','${item}','必须',this.parentElement)">必须</div>
+            <div class="tri-btn${cur==='优先'?' sel-pref':''}" onclick="ansTri('${q.id}','${item}','优先',this.parentElement)">优先</div>
+            <div class="tri-btn${cur==='可接受'?' sel-flex':''}" onclick="ansTri('${q.id}','${item}','可接受',this.parentElement)">可接受</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  if (q.type === 'rank') {
+    const rv = val.rank || {};
+    const opts = ['—','1','2','3','4','5','6'];
+    return `<div class="rank-table">
+      ${q.items.map(item => {
+        const cur = rv[item] || '';
+        return `<div class="rank-row">
+          <div class="rank-name">${item}</div>
+          <select class="rank-select" onchange="ansRank('${q.id}','${item}',this.value)">
+            ${opts.map(o => `<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  return '';
+}
+
+// ════════════════════════════════
+//  ANSWER HANDLERS
+// ════════════════════════════════
+function ans(qid, key, val) {
+  if (!state.answers[qid]) state.answers[qid] = {};
+  state.answers[qid][key] = val;
+  debounceSave();
+}
+function ansWord(qid, idx, val) {
+  if (!state.answers[qid]) state.answers[qid] = { words:['','',''] };
+  if (!state.answers[qid].words) state.answers[qid].words = ['','',''];
+  state.answers[qid].words[idx] = val;
+  debounceSave();
+}
+function toggleSingle(qid, opt, el) {
+  if (!state.answers[qid]) state.answers[qid] = { selected: [] };
+  state.answers[qid].selected = [opt];
+  el.closest('.opts-wrap').querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  debounceSave();
+}
+function toggleMulti(qid, opt, el) {
+  if (!state.answers[qid]) state.answers[qid] = { selected: [] };
+  const arr = state.answers[qid].selected;
+  const i = arr.indexOf(opt);
+  if (i >= 0) { arr.splice(i,1); el.classList.remove('selected'); }
+  else { arr.push(opt); el.classList.add('selected'); }
+  debounceSave();
+}
+function ansScale(qid, scaleIdx, val, container) {
+  if (!state.answers[qid]) state.answers[qid] = { scales:{} };
+  if (!state.answers[qid].scales) state.answers[qid].scales = {};
+  state.answers[qid].scales[scaleIdx] = val;
+  container.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  container.children[val-1].classList.add('selected');
+  debounceSave();
+}
+function ansPrio(qid, item, val, container) {
+  if (!state.answers[qid]) state.answers[qid] = { prio:{} };
+  if (!state.answers[qid].prio) state.answers[qid].prio = {};
+  state.answers[qid].prio[item] = val;
+  container.querySelectorAll('.prio-btn').forEach(b => b.className = 'prio-btn');
+  const cls = val==='必须'?'sel-must':val==='优先'?'sel-pref':'sel-flex';
+  event.target.className = `prio-btn ${cls}`;
+  debounceSave();
+}
+function ansTri(qid, item, val, container) {
+  if (!state.answers[qid]) state.answers[qid] = { tri:{} };
+  if (!state.answers[qid].tri) state.answers[qid].tri = {};
+  state.answers[qid].tri[item] = val;
+  container.querySelectorAll('.tri-btn').forEach(b => b.className = 'tri-btn');
+  const cls = val==='必须'?'sel-must':val==='优先'?'sel-pref':'sel-flex';
+  event.target.className = `tri-btn ${cls}`;
+  debounceSave();
+}
+function ansRank(qid, item, val) {
+  if (!state.answers[qid]) state.answers[qid] = { rank:{} };
+  if (!state.answers[qid].rank) state.answers[qid].rank = {};
+  state.answers[qid].rank[item] = val;
+  debounceSave();
+}
+
+// ════════════════════════════════
+//  DEBOUNCED SAVE
+// ════════════════════════════════
+let saveTimer = null;
+function debounceSave() {
+  clearTimeout(saveTimer);
+  setSaveBadge('saving');
+  saveTimer = setTimeout(() => saveState(), 1200);
+}
+
+// ════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  document.getElementById('scroll-area').scrollTop = 0;
+}
+
+function updateProgress() {
+  const si = state.currentSection;
+  const total = SECTIONS.length;
+  document.getElementById('prog-label').textContent = `第 ${si+1} 部分，共 ${total} 部分`;
+  const pct = Math.round(((si) / total) * 100);
+  document.getElementById('prog-pct').textContent = pct + '%';
+  SECTIONS.forEach((_,i) => {
+    const seg = document.getElementById(`seg-${i}`);
+    if (!seg) return;
+    seg.className = 'prog-seg' + (i < si ? ' done' : i === si ? ' active' : '');
+  });
+  document.getElementById('topbar-title').textContent = SECTIONS[si]?.zh || '需求调研';
+
+  const prevBtn = document.getElementById('btn-prev');
+  const nextBtn = document.getElementById('btn-next');
+  prevBtn.style.display = si === 0 ? 'none' : '';
+  if (si === total - 1) {
+    nextBtn.textContent = '提交问卷 ✓';
+    nextBtn.className = 'btn-next final';
+  } else {
+    nextBtn.textContent = '下一部分 →';
+    nextBtn.className = 'btn-next';
+  }
+}
+
+function nextSection() {
+  if (state.currentSection < SECTIONS.length - 1) {
+    state.currentSection++;
+    showScreen(`screen-s${state.currentSection}`);
+    updateProgress();
+    saveState();
+  } else {
+    submitSurvey();
+  }
+}
+
+function prevSection() {
+  if (state.currentSection > 0) {
+    state.currentSection--;
+    showScreen(`screen-s${state.currentSection}`);
+    updateProgress();
+  }
+}
+
+// ════════════════════════════════
+//  START / SUBMIT / RESTART
+// ════════════════════════════════
+function startSurvey() {
+  const name = document.getElementById('cover-name').value.trim();
+  const contact = document.getElementById('cover-contact').value.trim();
+  state.clientName = name;
+  state.clientContact = contact;
+  if (!state.startedAt) state.startedAt = new Date().toISOString();
+
+  document.getElementById('topbar').style.display = '';
+  document.getElementById('progress-wrap').style.display = '';
+  document.getElementById('bottom-nav').style.display = '';
+
+  buildSections();
+  showScreen(`screen-s${state.currentSection}`);
+  updateProgress();
+  saveState();
+}
+
+// ── 将所有答案序列化为可读文本，方便邮件阅读 ──
+function serializeAnswers() {
+  const lines = [];
+  lines.push(`【客户姓名】${state.clientName || '未填写'}`);
+  lines.push(`【联系方式】${state.clientContact || '未填写'}`);
+  lines.push(`【填写时间】${new Date().toLocaleString('zh-CN', {hour12:false})}`);
+  lines.push('');
+
+  SECTIONS.forEach(sec => {
+    lines.push(`━━ ${sec.num} ${sec.zh} ━━`);
+    sec.questions.forEach((q, qi) => {
+      lines.push(`\n${qi+1}. ${q.text}`);
+      const v = state.answers[q.id];
+      if (!v) { lines.push('  （未作答）'); return; }
+
+      if (q.type === 'textarea' || q.type === 'input') {
+        lines.push(`  ${v.text || '（未填写）'}`);
+      } else if (q.type === 'single' || q.type === 'multi') {
+        lines.push(`  ${(v.selected || []).join('、') || '（未选择）'}`);
+      } else if (q.type === 'three-words') {
+        lines.push(`  ${(v.words || []).filter(w=>w.trim()).join(' / ') || '（未填写）'}`);
+      } else if (q.type === 'scale') {
+        const sv = v.scales || {};
+        q.scales.forEach((s, i) => {
+          lines.push(`  ${s.left} ←[${sv[i]||'—'}]→ ${s.right}`);
+        });
+      } else if (q.type === 'prio') {
+        const pv = v.prio || {};
+        q.items.forEach(item => {
+          lines.push(`  ${item}：${pv[item] || '未选'}`);
+        });
+      } else if (q.type === 'tri') {
+        const tv = v.tri || {};
+        q.items.forEach(item => {
+          lines.push(`  ${item}：${tv[item] || '未选'}`);
+        });
+      } else if (q.type === 'rank') {
+        const rv = v.rank || {};
+        q.items.forEach(item => {
+          lines.push(`  ${item}：第 ${rv[item] || '—'} 位`);
+        });
+      }
+    });
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+async function submitSurvey() {
+  // 统计已答题数
+  let answered = 0;
+  SECTIONS.forEach(sec => {
+    sec.questions.forEach(q => {
+      const v = state.answers[q.id];
+      if (!v) return;
+      if (q.type==='textarea'||q.type==='input') { if(v.text&&v.text.trim()) answered++; }
+      else if (q.type==='single'||q.type==='multi') { if(v.selected&&v.selected.length>0) answered++; }
+      else if (q.type==='scale') { if(v.scales&&Object.keys(v.scales).length>0) answered++; }
+      else if (q.type==='three-words') { if(v.words&&v.words.some(w=>w.trim())) answered++; }
+      else answered++;
+    });
+  });
+
+  // 禁用提交按钮，显示 loading
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.textContent = '提交中…';
+  nextBtn.disabled = true;
+
+  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xpqbvokl';
+
+  // 构建提交数据
+  const payload = {
+    _subject: `【舞蹈工作室问卷】${state.clientName || '匿名客户'} · ${new Date().toLocaleDateString('zh-CN')}`,
+    客户姓名: state.clientName || '未填写',
+    联系方式: state.clientContact || '未填写',
+    完成题数: `${answered} / 33`,
+    填写时长: state.startedAt
+      ? Math.round((Date.now() - new Date(state.startedAt).getTime()) / 60000) + ' 分钟'
+      : '未知',
+    // 完整答案作为纯文本块，方便在邮件里直接阅读
+    全部答案: serializeAnswers(),
+    // 也把原始 JSON 带上，方便将来程序处理
+    _answers_json: JSON.stringify(state.answers),
+  };
+
+  let success = false;
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    success = res.ok && data.ok !== false;
+  } catch(e) {
+    success = false;
+  }
+
+  if (success) {
+    // 提交成功
+    document.getElementById('done-name').textContent = state.clientName || '（未填写）';
+    document.getElementById('done-time').textContent = new Date().toLocaleString('zh-CN', {hour12:false});
+    document.getElementById('done-count').textContent = `${answered} / 33 题`;
+
+    document.getElementById('topbar').style.display = 'none';
+    document.getElementById('progress-wrap').style.display = 'none';
+    document.getElementById('bottom-nav').style.display = 'none';
+
+    state.submitted = true;
+    state.submittedAt = new Date().toISOString();
+    saveState();
+
+    showScreen('screen-done');
+    showToast('问卷已成功提交！');
+  } else {
+    // 提交失败——恢复按钮，提示用户
+    nextBtn.textContent = '提交问卷 ✓';
+    nextBtn.disabled = false;
+    showToast('⚠️ 提交失败，请检查网络后重试');
+    // 同时把答案文本显示给用户，让他可以复制发给你
+    showFallbackCopy(serializeAnswers());
+  }
+}
+
+async function restartSurvey() {
+  if (!confirm('确定要清除所有填写内容并重新开始吗？')) return;
+  await clearState();
+  state = { currentSection:0, answers:{}, clientName:'', clientContact:'', startedAt:null };
+  document.getElementById('cover-name').value = '';
+  document.getElementById('cover-contact').value = '';
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('bottom-nav').style.display = 'none';
+  showScreen('screen-cover');
+}
+
+// ════════════════════════════════
+//  FALLBACK COPY (网络失败时)
+// ════════════════════════════════
+function showFallbackCopy(text) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(26,23,20,0.95);z-index:9999;
+    display:flex;flex-direction:column;padding:28px 20px;gap:16px;overflow-y:auto;
+  `;
+  overlay.innerHTML = `
+    <div style="color:#c8a96e;font-size:11px;letter-spacing:0.15em;margin-top:8px">提交失败 · 备用方案</div>
+    <div style="color:#f7f4ef;font-size:14px;line-height:1.9">
+      网络提交失败，请<strong style="color:#c8a96e">复制以下内容</strong>通过微信发送给设计师：
+    </div>
+    <textarea readonly id="fallback-textarea" style="
+      flex:1;min-height:280px;background:rgba(255,255,255,0.05);
+      border:1px solid rgba(200,169,110,0.3);border-radius:10px;
+      color:#f7f4ef;font-size:12px;line-height:1.9;
+      padding:14px;font-family:'Noto Sans SC',sans-serif;resize:none;outline:none;
+    ">${text.replace(/</g,'&lt;')}</textarea>
+    <button id="fallback-copy-btn" onclick="doCopyFallback()" style="
+      padding:15px;background:#c8a96e;border:none;border-radius:12px;
+      font-size:14px;font-weight:500;font-family:'Noto Sans SC',sans-serif;
+      color:#1a1714;cursor:pointer;letter-spacing:0.08em;
+    ">一键复制全部内容</button>
+    <button onclick="document.getElementById('fallback-overlay').remove()" style="
+      padding:12px;background:transparent;border:1px solid rgba(247,244,239,0.15);
+      border-radius:12px;font-size:13px;color:rgba(247,244,239,0.5);
+      font-family:'Noto Sans SC',sans-serif;cursor:pointer;
+    ">关闭</button>
+  `;
+  overlay.id = 'fallback-overlay';
+  document.body.appendChild(overlay);
+}
+
+function doCopyFallback() {
+  const ta = document.getElementById('fallback-textarea');
+  const btn = document.getElementById('fallback-copy-btn');
+  const doSuccess = () => {
+    btn.textContent = '✓ 已复制！发给设计师吧';
+    btn.style.background = '#4a7c59';
+    btn.style.color = '#fff';
+  };
+  try {
+    navigator.clipboard.writeText(ta.value).then(doSuccess).catch(() => {
+      ta.select(); document.execCommand('copy'); doSuccess();
+    });
+  } catch(e) { ta.select(); document.execCommand('copy'); doSuccess(); }
+}
+
+function copyAnswers() {
+  const text = serializeAnswers();
+  navigator.clipboard.writeText(text)
+    .then(() => showToast('✓ 答案已复制到剪贴板'))
+    .catch(() => showFallbackCopy(text));
+}
+
+// ════════════════════════════════
+//  TOAST
+// ════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ════════════════════════════════
+//  INIT
+// ════════════════════════════════
+async function init() {
+  const saved = await loadState();
+  if (saved) {
+    state = saved;
+    if (state.submitted) {
+      // show done screen directly
+      document.getElementById('done-name').textContent = state.clientName || '（未填写）';
+      document.getElementById('done-time').textContent = new Date(state.submittedAt).toLocaleString('zh-CN',{hour12:false});
+      showScreen('screen-done');
+      return;
+    }
+    if (state.startedAt && state.currentSection >= 0) {
+      // resume
+      document.getElementById('cover-name').value = state.clientName || '';
+      document.getElementById('cover-contact').value = state.clientContact || '';
+      document.getElementById('topbar').style.display = '';
+      document.getElementById('progress-wrap').style.display = '';
+      document.getElementById('bottom-nav').style.display = '';
+      buildSections();
+      showScreen(`screen-s${state.currentSection}`);
+      updateProgress();
+      showToast('已自动恢复上次进度 ✓');
+      return;
+    }
+  }
+  // fresh start
+  showScreen('screen-cover');
+}
+
+init();
+</script>
+</body>
+</html>
